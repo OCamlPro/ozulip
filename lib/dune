@@ -1,0 +1,4 @@
+(library
+ (name ozulip)
+ (public_name ozulip)
+ (libraries ezcurl-lwt))
