@@ -21,5 +21,8 @@
  (depends 
   ocaml 
   dune
-  ezcurl-lwt)
+  ez_api
+  base64
+  lwt
+  yojson)
  (tags (zulip bindings api)))
