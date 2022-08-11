@@ -3,7 +3,7 @@ OCaml bindings to [Zulip API](https://zulip.com/api/).
 
 ## Messages
 
-### Send message
+### Send message
 
 ```ocaml
     let _ =
@@ -25,7 +25,7 @@ OCaml bindings to [Zulip API](https://zulip.com/api/).
         Messages.send_message conf dest msg
 ```
 
-### Edit message
+### Edit message
 
 ```ocaml
     let _ =
