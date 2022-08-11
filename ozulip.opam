@@ -9,16 +9,15 @@ homepage: "https://github.com/OCamlPro/ozulip"
 doc: "https://ocamlpro.github.io/ozulip/"
 bug-reports: "https://github.com/OCamlPro/ozulip/issues"
 depends: [
-  "ocaml"
-  "dune" {>= "3.4"}
+  "ocaml" {>= "4.10"}
+  "dune" {>= "2.0"}
   "ez_api"
   "base64"
   "lwt"
   "yojson"
-  "odoc" {with-doc}
 ]
 build: [
-  ["dune" "subst"] {dev}
+  ["dune" "subst"] {pinned}
   [
     "dune"
     "build"

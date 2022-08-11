@@ -1,4 +1,4 @@
-(lang dune 3.4)
+(lang dune 2.0)
 
 (name ozulip)
 
@@ -18,11 +18,14 @@
 (package
  (name ozulip)
  (synopsis "OCaml bindings to Zulip API")
- (depends 
-  ocaml 
-  dune
+ (depends
+  (ocaml
+   (>= 4.10))
+  (dune
+   (>= 2.0))
   ez_api
   base64
   lwt
   yojson)
- (tags (zulip bindings api)))
+ (tags
+  (zulip bindings api)))
