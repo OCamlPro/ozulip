@@ -52,10 +52,9 @@ let encode_body_send_message queue_id local_id dest content =
 let send_message ?queue_id ?local_id config dest content =
   let data = encode_body_send_message queue_id local_id dest content in
   Request.request_api config `POST "messages" mime_form_url data >>= function
-  | Ok response -> destruct response_id_enc response |> Lwt.return_some
+  | Ok response -> destruct response_id_enc response |> Lwt.return_ok
   | Error (code, msg) ->
-      print_error code msg;
-      Lwt.return_none
+      Lwt.return_error (code, msg)
 
 let upload_file config filename =
   let file_content =
