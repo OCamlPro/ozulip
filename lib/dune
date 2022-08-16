@@ -2,9 +2,4 @@
  (name ozulip)
  (public_name ozulip)
  (flags :standard -w -27-33)
- (libraries 
-    ez_api 
-    ez_api.curl_lwt 
-    ez_api.encoding 
-    base64
-    yojson))
+ (libraries ez_api ez_api.cohttp_lwt ez_api.encoding base64 yojson))
