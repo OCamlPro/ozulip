@@ -34,7 +34,7 @@ let print_error code msg =
   Printf.eprintf "Zulip API error %d : %s\n" code
     (match msg with
     | None -> "Internal error"
-    | Some s -> response_field "msg" s)
+    | Some s -> response_field s "msg" )
 
 let unmatch_args name arg = match arg with Some x -> [ (name, x) ] | _ -> []
 let mime_form_url = "application/x-www-form-urlencoded"
