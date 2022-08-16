@@ -51,7 +51,7 @@ let encode_body_send_message queue_id local_id dest content =
 
 let send_message ?queue_id ?local_id config dest content =
   let data = encode_body_send_message queue_id local_id dest content in
-  Request.request_api config "POST" "messages" mime_form_url data >>= function
+  Request.request_api config `POST "messages" mime_form_url data >>= function
   | Ok response -> destruct response_id_enc response |> Lwt.return_some
   | Error (code, msg) ->
       print_error code msg;
@@ -84,7 +84,7 @@ let upload_file config filename =
         Buffer.add_string buff ("--" ^ boundary ^ "--\r\n");
         Buffer.contents buff
       in
-      Request.request_api config "POST" "user_uploads"
+      Request.request_api config `POST "user_uploads"
         ("multipart/form-data; boundary=" ^ boundary)
         content
       >>= function
@@ -126,7 +126,7 @@ let edit_message ?topic ?stream_id ?content ?(prop_mode = One)
       notif_new
   in
   let endpoint = Format.sprintf "messages/%d" id in
-  Request.request_api config "PATCH" endpoint mime_form_url data >>= function
+  Request.request_api config `PATCH endpoint mime_form_url data >>= function
   | Ok _ -> Lwt.return_true
   | Error (code, msg) ->
       print_error code msg;
@@ -134,7 +134,7 @@ let edit_message ?topic ?stream_id ?content ?(prop_mode = One)
 
 let delete_message config id =
   let endpoint = Format.sprintf "messages/%d" id in
-  Request.request_api_no_body config "DELETE" endpoint >>= function
+  Request.request_api_no_body config `DELETE endpoint >>= function
   | Ok _ -> Lwt.return_true
   | Error (code, msg) ->
       print_error code msg;
