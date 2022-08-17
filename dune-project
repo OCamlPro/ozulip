@@ -26,7 +26,7 @@
   ez_api
   base64
   lwt
-  (ez_file (= 0.2.0))
+  (ez_file (>= 0.3.0))
   yojson)
  (tags
   (zulip bindings api)))
