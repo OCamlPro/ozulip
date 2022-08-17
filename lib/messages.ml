@@ -2,6 +2,7 @@ open Common
 open Config
 open EzAPI
 open Lwt.Infix
+open Ez_file.V1
 
 type user_ids = User_ids of int list | User_emails of string list
 type stream_id = Stream_id of int | Stream_name of string
@@ -59,10 +60,7 @@ let send_message ?queue_id ?local_id config dest content =
 let upload_file config filename =
   let file_content =
     try
-      let ic = open_in_bin filename in
-      let file_content = In_channel.input_all ic in
-      close_in ic;
-      Some file_content
+      Some ( EzFile.read_file filename )
     with _ -> None
   in
   match file_content with
