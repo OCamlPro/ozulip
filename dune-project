@@ -27,6 +27,7 @@
   base64
   lwt
   (ez_file (>= 0.3.0))
+  cohttp-lwt-unix
   yojson)
  (tags
   (zulip bindings api)))
