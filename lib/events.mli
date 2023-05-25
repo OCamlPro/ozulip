@@ -58,7 +58,12 @@ module Message : sig
   val is_own_message : Config.config -> t -> bool
 
   (** Returns whether the message is in a private conversation with a single
-      other user. *)
+      other user.
+
+      Note that what OZulip calls a "privmsg" here is not the same as what Zulip
+      calls a "private" message, because Zulip's "private" message can also be
+      group conversations with many users.
+   *)
   val is_privmsg : t -> bool
 
   (** Reply to a message. 
