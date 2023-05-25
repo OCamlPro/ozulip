@@ -57,14 +57,31 @@ module Message : sig
   (** Returns whether the message was sent by the current user. *)
   val is_own_message : Config.config -> t -> bool
 
-  (** Returns whether the message is in a private conversation with a single
-      other user.
+  (** Returns whether the message is a self-message, i.e. a message in a
+      conversation between the current user and themselves.
+
+      Note that this is different from [is_own_message]: all "selfmsg" are sent
+      by the current user (i.e. [is_own_message] is [true]), but the current
+      user can send messages in conversations involving other users (in which
+      case [is_own_message] would be [true] but [is_selfmsg] would be [false]).
+   *)
+  val is_selfmsg : t -> bool
+
+  (** Returns whether the message is in a private conversation with exactly two
+      users.
 
       Note that what OZulip calls a "privmsg" here is not the same as what Zulip
       calls a "private" message, because Zulip's "private" message can also be
       group conversations with many users.
    *)
   val is_privmsg : t -> bool
+
+  (** Returns whether the message is in a private *group* conversation.
+
+      Messages sent to a stream are never "groupmsg", and neither are private
+      messages with two members or less.
+   *)
+  val is_groupmsg : t -> bool
 
   (** Reply to a message. 
 

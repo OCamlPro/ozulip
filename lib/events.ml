@@ -61,12 +61,22 @@ module Message = struct
 
   let is_own_message config m = m.sender_email = config.Config.email
 
+  let is_selfmsg { recipients; _ } =
+    match recipients with
+    | Private [ _ ] -> true
+    | _ -> false
+
   let is_privmsg { recipients; _ } =
     (* A message is a privmsg if it has exactly two recipients: us and the
        sender. *)
     match recipients with
     | Private [ _; _ ] -> true
     | Private _ | Stream _ -> false
+
+  let is_groupmsg { recipients; _ } =
+    match recipients with
+    | Private [] | Private [ _ ] | Private [ _; _ ] | Stream _ -> false
+    | Private _ -> true
 
   let reply ?(privmsg = false) ?(mention = true) config m =
     (* Note: the slightly convoluted implementation ensures that we don't keep a
