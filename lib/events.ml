@@ -57,8 +57,7 @@ module Message = struct
   let is_trusted ?(trusted_ids = []) ?(trusted_emails = []) { sender_id; sender_email; _ } =
     List.mem sender_id trusted_ids || List.mem sender_email trusted_emails
 
-  let has_flag flag m =
-    if List.mem flag m.flags then true else false
+  let has_flag flag m = List.mem flag m.flags
 
   let is_own_message config m = m.sender_email = config.Config.email
 
@@ -115,13 +114,13 @@ let add pp key x args = (key, [ Format.asprintf "%a" pp x ]) :: args
 let add_opt pp key opt args =
   match opt with Some x -> add pp key x args | None -> args
 
-let pp_string ppf s = Format.fprintf ppf "%s" s
+let pp_string = Format.pp_print_string
 
-let bool_opt = add_opt pp_bool
+let bool_opt = add_opt Format.pp_print_bool
 let int_opt = add_opt pp_int
 let list_opt pp = add_opt (pp_list pp)
 let list pp = add (pp_list pp)
-let bool = add pp_bool
+let bool = add Format.pp_print_bool
 let string = add pp_string
 
 let register_result_enc =
@@ -352,7 +351,7 @@ let strip_initial_mentions =
 let commands ?trusted_ids ?trusted_emails ?(strip_mentions = true) config =
   let is_trusted = 
     match trusted_ids, trusted_emails with
-    | None, None -> fun _ -> true
+    | None, None -> Fun.const true
     | _ -> Message.is_trusted ?trusted_ids ?trusted_emails 
   in
   messages config |>
@@ -377,5 +376,5 @@ let interact ?trusted_ids ?trusted_emails ?privmsg ?mention config f =
   Lwt_stream.iter_p (fun m -> 
     let send = Message.reply ?privmsg ?mention config m in
     f m.Message.content >>= function
-    | Some reply -> send reply >|= fun _ -> ()
+    | Some reply -> send reply >|= ignore
     | None -> Lwt.return_unit)

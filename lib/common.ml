@@ -2,7 +2,6 @@ open Json_encoding
 
 let pp_string fmt = Format.fprintf fmt "\"%s\""
 let pp_int fmt = Format.fprintf fmt "%d"
-let pp_bool fmt = Format.fprintf fmt "%b"
 let pp_sep fmt () = Format.fprintf fmt ", "
 
 let pp_list pp_elt fmt l =
