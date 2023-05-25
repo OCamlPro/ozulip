@@ -2,10 +2,13 @@ open Json_encoding
 
 let pp_string fmt = Format.fprintf fmt "\"%s\""
 let pp_int fmt = Format.fprintf fmt "%d"
+let pp_bool fmt = Format.fprintf fmt "%b"
 let pp_sep fmt () = Format.fprintf fmt ", "
 
 let pp_list pp_elt fmt l =
   Format.fprintf fmt "[%a]" (Format.pp_print_list ~pp_sep pp_elt) l
+let pp_pair pp_l pp_r fmt (l, r) =
+  Format.fprintf fmt "[%a, %a]" pp_l l pp_r r
 
 let pp_int_list = pp_list pp_int
 let pp_string_list = pp_list pp_string

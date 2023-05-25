@@ -46,3 +46,15 @@ OCaml bindings to [Zulip API](https://zulip.com/api/).
         let%lwt mess_id =  Messages.send_message conf dest "New message from `ozulip`" in
         Messages.delete_message mess_id
 ```
+
+### High-level user interaction
+
+```ocaml
+    let _ =
+        let open Ozulip in
+        let conf = init ~domain ~email ~key in
+        Events.interact ~trusted_emails:["you@example.com"] conf (fun msg ->
+            if String.lowercase_ascii msg = "ping"
+            then Lwt.return_some "pong"
+            else Lwt.return_none)
+```
