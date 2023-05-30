@@ -1,6 +1,8 @@
 open Common
 open Lwt.Infix
 
+module Log = (val Logs_lwt.src_log (Logs.Src.create "ozulip.events"))
+
 module Smap = Map.Make(String)
 
 module Message = struct
@@ -295,7 +297,12 @@ let backoff ?(exp = 2.) ?(ceiling = 10) f x =
   let rec aux i t =
     f x >>= function
     | Ok r -> Lwt.return r
-    | Error _ ->
+    | Error (code, status) ->
+      Log.debug (fun m ->
+        m "HTTP error %d: %a" code Format.(pp_print_option pp_print_string) status)
+      >>= fun () ->
+      Log.debug (fun m -> m "Retrying with exponential backoff...")
+      >>= fun () ->
       Lwt_unix.sleep t >>= fun () ->
       if i < ceiling then 
         aux (i + 1) (exp *. t)
@@ -318,7 +325,9 @@ let stream ?event_types config =
       (Lwt_unix.sleep timeout >|= fun () -> None);
       (events ~last_event_id ~queue_id config >|= fun e -> Some e);
     ] >>= function
-    | None -> events' events_config
+    | None ->
+      Log.debug (fun m -> m "events timeout reached, retrying") >>= fun () ->
+      events' events_config
     | Some e -> Lwt.return e
   in
   let rec aux ({ queue_id; last_event_id; _ } as events_config) =
@@ -338,14 +347,19 @@ let stream ?event_types config =
       (* If we get a 4XX HTTP error (client error), we stop trying -- if we are
          making a bogus query somehow, we probably are going to be stuck in an
          error loop otherwise.
+
+         This is also the case for negative error codes, which are returned on
+         internal errors of some of the upstream libraries (ez_api, cohttp, or
+         conduit, I am not sure).
        *)
-      if 400 <= code && code < 500 then begin
+      if code < 0 || 400 <= code && code < 500 then begin
         push None;
         Lwt.fail_with ("HTTP client error " ^ string_of_int code) 
       end else 
         (* TODO: only register a new queue if we get a BAD_EVENT_QUEUE_ID error
            code. 
          *)
+        Log.err (fun m -> m "HTTP error %d: %a" code (Format.pp_print_option Format.pp_print_string) status) >>= fun () ->
         register config >>= aux
   in
   Lwt.async (fun () -> register config >>= aux);
@@ -388,5 +402,9 @@ let interact ?trusted_ids ?trusted_emails ?privmsg ?mention config f =
   Lwt_stream.iter_p (fun m -> 
     let send = Message.reply ?privmsg ?mention config m in
     f m.Message.content >>= function
-    | Some reply -> send reply >|= ignore
+    | Some reply -> send reply >>= begin function
+      | Ok _ -> Lwt.return_unit
+      | Error (code, msg) ->
+          Log.err (fun m -> m "HTTP error %d: %a" code (Format.pp_print_option Format.pp_print_string) msg)
+      end
     | None -> Lwt.return_unit)

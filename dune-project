@@ -29,6 +29,7 @@
   lwt
   (ez_file (>= 0.3.0))
   cohttp-lwt-unix
-  yojson)
+  yojson
+  logs)
  (tags
   (zulip bindings api)))
