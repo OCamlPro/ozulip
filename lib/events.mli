@@ -100,6 +100,20 @@ module Message : sig
     t ->
     string ->
     (int, int * string option) Lwt_result.t
+
+  (** [replyf] calls [reply] with a pretty-printed string argument.
+
+      [replyf conf msg "Here is a quote: %s" quote] does the same thing as
+      [reply conf msg (Format.asprintf "Here is a quote: %s" quote)] but is
+      more convenient.
+  *)
+  val replyf:
+    ?privmsg:bool ->
+    ?mention:bool ->
+    Config.config ->
+    t ->
+    ('a, Format.formatter, unit, (int, int * string option) Lwt_result.t) format4 ->
+    'a
 end
 
 (** Interact with other users.

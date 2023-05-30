@@ -93,6 +93,9 @@ module Message = struct
         | None -> reply
       in
       Messages.send_message config dest reply
+
+  let replyf ?privmsg ?mention config m =
+    Format.kasprintf (reply ?privmsg ?mention config m)
 end
 
 type event = ..
