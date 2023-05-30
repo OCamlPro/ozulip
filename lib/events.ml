@@ -271,8 +271,7 @@ module Encodings = struct
       ]
 
   let events_response =
-    obj2
-      (req "queue_id" string)
+    obj1
       (req "events" (list event))
 end
 
@@ -321,7 +320,7 @@ let stream ?event_types config =
   in
   let rec aux ({ queue_id; last_event_id; _ } as events_config) =
     events' events_config >>= function
-    | Ok (_, events) -> 
+    | Ok events ->
       let last_event_id =
       List.fold_left
         (fun last_id (id, ev) -> 

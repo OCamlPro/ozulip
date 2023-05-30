@@ -224,7 +224,7 @@ val events :
     ?blocking:bool ->
     queue_id:queue_id ->
     Config.config ->
-    (queue_id * (int * event) list, int * string option) Lwt_result.t
+    ((int * event) list, int * string option) Lwt_result.t
 
 (** Low-level wrapper around the ["deregister"] endpoint.
 
