@@ -5,7 +5,7 @@ This module provides both {{!section-highlevel}high-level} and
 
  *)
 
-(** {1:highlevel High-Level Interface} 
+(** {1:highlevel High-Level Interface}
 
  *)
 
@@ -17,7 +17,7 @@ module Message : sig
       See {: https://zulip.com/api/update-message-flags#available-flags}.
    *)
   type flag =
-    | Read 
+    | Read
     | Starred
     | Collapsed
     | Mentioned
@@ -83,7 +83,7 @@ module Message : sig
    *)
   val is_groupmsg : t -> bool
 
-  (** Reply to a message. 
+  (** Reply to a message.
 
       @param privmsg Determines how to reply to commands. By default, replies are
         sent to the same stream that the command was sent to. If [privmsg] is
@@ -136,28 +136,23 @@ val interact :
     (string -> string option Lwt.t) ->
     unit Lwt.t
 
-(** Returns a stream of the commands sent to the user. 
+(** Returns a stream of the commands sent to the user.
 
     This is an utility function meant for bot authors.
 
     A command is a message:
      - That was not sent by the current user,
      - That has not been read yet,
-     - That either was sent in a one-on-one private conversation, or otherwise
-       mentions the current user (through a regular mention, not a wildcard).
+     - That either was sent in a one-on-one private conversation, or starts by a
+       mention of the current user (must be a regular mention, not a wildcard).
 
     If either [trusted_ids] or [trusted_emails] are provided, this function
     discards messages that are not trusted (as determined by
     {!Message.is_trusted}). Otherwise, all messages are kept.
-
-    By default, initial mentions are stripped from the message content for
-    convenience. This behavior can be disabled by setting [strip_mentions] to
-    [false].
 *)
 val commands :
       ?trusted_ids:int list ->
       ?trusted_emails:string list ->
-      ?strip_mentions:bool ->
       Config.config ->
       Message.t Lwt_stream.t
 
@@ -184,7 +179,7 @@ type event +=
   | Message of Message.t
     (** A message that was sent to the user. *)
   | Heartbeat
-    (** Heartbeat events sent by Zulip to keep the connection alive. 
+    (** Heartbeat events sent by Zulip to keep the connection alive.
 
         These should only be relevant to users of the low-level {!events}
         interface. High-level interfaces such as {!stream} automatically deals
@@ -195,7 +190,7 @@ type event +=
 type event_type = [ `Message ]
 
 (** A queue identifier is really just a string, but we wrap it in a private type
-    for clarity. 
+    for clarity.
  *)
 type queue_id = private string
 
@@ -245,7 +240,7 @@ val events :
     See the {{: https://zulip.com/api/delete-queue}Zulip documentation} for more
     details.
  *)
-val deregister : 
+val deregister :
     queue_id:string ->
     Config.config ->
     (unit, int * string option) Lwt_result.t

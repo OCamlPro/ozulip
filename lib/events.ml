@@ -11,7 +11,7 @@ module Message = struct
     | Private of int list
 
   type flag =
-    | Read 
+    | Read
     | Starred
     | Collapsed
     | Mentioned
@@ -32,7 +32,7 @@ module Message = struct
       ]
     )
 
-  type t = { 
+  type t = {
     id: int ;
     sender_id: int ;
     sender_email: string ;
@@ -85,7 +85,7 @@ module Message = struct
        reference to [m] in the closure. *)
     let dest = if privmsg then sender_destination m else destination m in
     let mention =
-      if privmsg || is_privmsg m || not mention then None 
+      if privmsg || is_privmsg m || not mention then None
       else Some (sender_mention m)
     in
     fun reply ->
@@ -221,10 +221,10 @@ module Encodings = struct
     custom
       ~is_object:true
       ~schema:Json_schema.any
-      (fun _ -> 
+      (fun _ ->
         failwith "construct: not supported")
-      (function 
-        | `O fs -> 
+      (function
+        | `O fs ->
           let fs = List.to_seq fs |> Smap.of_seq in
           let field = assoc fs in
           let id = field "id" |>> int in
@@ -253,7 +253,7 @@ module Encodings = struct
 
   let message_event =
     let open Message in
-    conv 
+    conv
       (fun message -> ((), message, message.flags))
       (fun ((), message, flags) -> { message with flags })
     @@
@@ -304,7 +304,7 @@ let backoff ?(exp = 2.) ?(ceiling = 10) f x =
       Log.debug (fun m -> m "Retrying with exponential backoff...")
       >>= fun () ->
       Lwt_unix.sleep t >>= fun () ->
-      if i < ceiling then 
+      if i < ceiling then
         aux (i + 1) (exp *. t)
       else
         aux i t
@@ -335,7 +335,7 @@ let stream ?event_types config =
     | Ok events ->
       let last_event_id =
       List.fold_left
-        (fun last_id (id, ev) -> 
+        (fun last_id (id, ev) ->
           begin match ev with
           | Heartbeat -> ()
           | _ -> push (Some ev)
@@ -354,10 +354,10 @@ let stream ?event_types config =
        *)
       if code < 0 || 400 <= code && code < 500 then begin
         push None;
-        Lwt.fail_with ("HTTP client error " ^ string_of_int code) 
-      end else 
+        Lwt.fail_with ("HTTP client error " ^ string_of_int code)
+      end else
         (* TODO: only register a new queue if we get a BAD_EVENT_QUEUE_ID error
-           code. 
+           code.
          *)
         Log.err (fun m -> m "HTTP error %d: %a" code (Format.pp_print_option Format.pp_print_string) status) >>= fun () ->
         register config >>= aux
@@ -370,36 +370,40 @@ let messages config =
     | Message m -> m
     | _ -> assert false) @@
   stream ~event_types:[`Message] config
+
 let strip_initial_mentions =
   let re = Re.(Perl.re {|^\s*@\*\*[^\*]+\*\*\s*|} |> compile) in
-  Re.replace_string ~all:true re ~by:""
+  fun s ->
+    match Re.exec re s with
+    | g ->
+      let pos = Re.Group.stop g 0 in
+      let len = String.length s - pos in
+      String.sub s pos len
+    | exception Not_found -> assert false
 
-let commands ?trusted_ids ?trusted_emails ?(strip_mentions = true) config =
-  let is_trusted = 
+let commands ?trusted_ids ?trusted_emails config =
+  let is_trusted =
     match trusted_ids, trusted_emails with
     | None, None -> Fun.const true
-    | _ -> Message.is_trusted ?trusted_ids ?trusted_emails 
+    | _ -> Message.is_trusted ?trusted_ids ?trusted_emails
   in
   messages config |>
-  Lwt_stream.filter_map (fun m -> 
+  Lwt_stream.filter_map (fun m ->
     if
       not (Message.is_own_message config m) &&
       (Message.has_flag Mentioned m || Message.is_privmsg m) &&
       not (Message.has_flag Read m) &&
       is_trusted m
     then
-      let m = if strip_mentions then 
-        { m with content = strip_initial_mentions m.content }
-      else
-        m
-      in
-      Some m
+      try
+        Some { m with content = strip_initial_mentions m.content }
+      with Not_found -> None
     else
       None)
 
 let interact ?trusted_ids ?trusted_emails ?privmsg ?mention config f =
   commands ?trusted_ids ?trusted_emails config |>
-  Lwt_stream.iter_p (fun m -> 
+  Lwt_stream.iter_p (fun m ->
     let send = Message.reply ?privmsg ?mention config m in
     f m.Message.content >>= function
     | Some reply -> send reply >>= begin function
