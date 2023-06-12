@@ -128,6 +128,7 @@ end
     will not block the processing of other commands.
  *)
 val interact :
+    ?switch:Lwt_switch.t ->
     ?trusted_ids:int list ->
     ?trusted_emails:string list ->
     ?privmsg:bool ->
@@ -151,6 +152,7 @@ val interact :
     {!Message.is_trusted}). Otherwise, all messages are kept.
 *)
 val commands :
+      ?switch:Lwt_switch.t ->
       ?trusted_ids:int list ->
       ?trusted_emails:string list ->
       Config.config ->
@@ -163,7 +165,7 @@ val commands :
 
     Bot authors may find {!commands} or {!interact} more useful.
 *)
-val messages : Config.config -> Message.t Lwt_stream.t
+val messages : ?switch:Lwt_switch.t -> Config.config -> Message.t Lwt_stream.t
 
 (** {1:lowlevel Low-Level Interface} *)
 
@@ -255,6 +257,7 @@ val deregister :
     Most of the time, you want to use {!messages} or {!commands} instead.
 *)
 val stream :
+    ?switch:Lwt_switch.t ->
     ?event_types:event_type list ->
     Config.config ->
     event Lwt_stream.t

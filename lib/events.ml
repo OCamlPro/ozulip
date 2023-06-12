@@ -1,7 +1,9 @@
 open Common
 open Lwt.Infix
 
-module Log = (val Logs_lwt.src_log (Logs.Src.create "ozulip.events"))
+let log_src = Logs.Src.create "ozulip.events"
+module Log = (val Logs_lwt.src_log log_src)
+module Logi = (val Logs.src_log log_src)
 
 module Smap = Map.Make(String)
 
@@ -293,8 +295,9 @@ let events ?last_event_id ?(blocking = true) ~queue_id config =
   Json_encoding.destruct ~ignore_extra_fields:true Encodings.events_response
   (EzEncoding.Ezjsonm.from_string x)
 
-let backoff ?(exp = 2.) ?(ceiling = 10) f x =
+let backoff ?switch ?(exp = 2.) ?(ceiling = 10) f x =
   let rec aux i t =
+    Lwt_switch.check switch;
     f x >>= function
     | Ok r -> Lwt.return r
     | Error (code, status) ->
@@ -310,7 +313,10 @@ let backoff ?(exp = 2.) ?(ceiling = 10) f x =
         aux i t
   in aux 0 1.
 
-let stream ?event_types config =
+let stream ?switch ?event_types config =
+  let cancelled = Lwt_mvar.create_empty () in
+  Lwt_switch.add_hook switch (Lwt_mvar.put cancelled);
+
   let stream, push = Lwt_stream.create () in
   let register = backoff @@ register ?event_types in
   (* Repeatedly request events using the provided timeout.
@@ -323,9 +329,11 @@ let stream ?event_types config =
     let timeout = float_of_int events_config.event_queue_longpoll_timeout_seconds in
     Lwt.pick [
       (Lwt_unix.sleep timeout >|= fun () -> None);
+      (Lwt_mvar.take cancelled >|= fun () -> None);
       (events ~last_event_id ~queue_id config >|= fun e -> Some e);
     ] >>= function
     | None ->
+      Lwt_switch.check switch;
       Log.debug (fun m -> m "events timeout reached, retrying") >>= fun () ->
       events' events_config
     | Some e -> Lwt.return e
@@ -362,14 +370,16 @@ let stream ?event_types config =
         Log.err (fun m -> m "HTTP error %d: %a" code (Format.pp_print_option Format.pp_print_string) status) >>= fun () ->
         register config >>= aux
   in
-  Lwt.async (fun () -> register config >>= aux);
+  Lwt.dont_wait (fun () -> register config >>= aux) (function
+  | Lwt_switch.Off -> ()
+  | e -> Logi.err (fun m -> m "uncaught: %s" (Printexc.to_string e)));
   stream
 
-let messages config =
+let messages ?switch config =
   Lwt_stream.map (function
     | Message m -> m
     | _ -> assert false) @@
-  stream ~event_types:[`Message] config
+  stream ?switch ~event_types:[`Message] config
 
 let strip_initial_mentions =
   let re = Re.(Perl.re {|^\s*@\*\*[^\*]+\*\*\s*|} |> compile) in
@@ -381,13 +391,13 @@ let strip_initial_mentions =
       String.sub s pos len
     | exception Not_found -> assert false
 
-let commands ?trusted_ids ?trusted_emails config =
+let commands ?switch ?trusted_ids ?trusted_emails config =
   let is_trusted =
     match trusted_ids, trusted_emails with
     | None, None -> Fun.const true
     | _ -> Message.is_trusted ?trusted_ids ?trusted_emails
   in
-  messages config |>
+  messages ?switch config |>
   Lwt_stream.filter_map (fun m ->
     if
       not (Message.is_own_message config m) &&
@@ -401,7 +411,7 @@ let commands ?trusted_ids ?trusted_emails config =
     else
       None)
 
-let interact ?trusted_ids ?trusted_emails ?privmsg ?mention config f =
+let interact ?switch ?trusted_ids ?trusted_emails ?privmsg ?mention config f =
   commands ?trusted_ids ?trusted_emails config |>
   Lwt_stream.iter_p (fun m ->
     let send = Message.reply ?privmsg ?mention config m in
