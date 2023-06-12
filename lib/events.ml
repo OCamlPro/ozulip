@@ -384,12 +384,10 @@ let messages ?switch config =
 let strip_initial_mentions =
   let re = Re.(Perl.re {|^\s*@\*\*[^\*]+\*\*\s*|} |> compile) in
   fun s ->
-    match Re.exec re s with
-    | g ->
-      let pos = Re.Group.stop g 0 in
-      let len = String.length s - pos in
-      String.sub s pos len
-    | exception Not_found -> assert false
+    let g = Re.exec re s in
+    let pos = Re.Group.stop g 0 in
+    let len = String.length s - pos in
+    String.sub s pos len
 
 let commands ?switch ?trusted_ids ?trusted_emails config =
   let is_trusted =
@@ -405,9 +403,12 @@ let commands ?switch ?trusted_ids ?trusted_emails config =
       not (Message.has_flag Read m) &&
       is_trusted m
     then
-      try
-        Some { m with content = strip_initial_mentions m.content }
-      with Not_found -> None
+      if Message.has_flag Mentioned m then
+        try
+          Some { m with content = strip_initial_mentions m.content }
+        with Not_found -> None
+      else
+        Some m
     else
       None)
 
