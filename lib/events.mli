@@ -25,8 +25,23 @@ module Message : sig
     | Has_alert_word
     | Historical
 
+  (** Message recipients *)
+  type recipients =
+    | Stream of int * string
+      (** [Stream (stream_id, topic)] *)
+    | Private of int list
+      (** [Private user_ids] *)
+
   (** The type of messages. *)
-  type t
+  type t = private {
+    id: int ;
+    sender_id: int ;
+    sender_email: string ;
+    sender_full_name: string;
+    recipients: recipients ;
+    content : string ;
+    flags : flag list ;
+  }
 
   (** Returns the message's content as a string. *)
   val content : t -> string

@@ -295,6 +295,7 @@ let events ?last_event_id ?(blocking = true) ~queue_id config =
   Json_encoding.destruct ~ignore_extra_fields:true Encodings.events_response
   (EzEncoding.Ezjsonm.from_string x)
 
+(* Exponential backoff helper. *)
 let backoff ?switch ?(exp = 2.) ?(ceiling = 10) f x =
   let rec aux i t =
     Lwt_switch.check switch;
@@ -326,7 +327,9 @@ let stream ?switch ?event_types config =
      disconnected.
   *)
   let rec events' ({ queue_id; last_event_id; _ } as events_config) =
-    let timeout = float_of_int events_config.event_queue_longpoll_timeout_seconds in
+    let timeout =
+      float_of_int events_config.event_queue_longpoll_timeout_seconds
+    in
     Lwt.pick [
       (Lwt_unix.sleep timeout >|= fun () -> None);
       (Lwt_mvar.take cancelled >|= fun () -> None);
@@ -365,13 +368,16 @@ let stream ?switch ?event_types config =
         Lwt.fail_with ("HTTP client error " ^ string_of_int code)
       end else
         (* TODO: only register a new queue if we get a BAD_EVENT_QUEUE_ID error
-           code.
+           code. But I do not know how to get that information.
          *)
-        Log.err (fun m -> m "HTTP error %d: %a" code (Format.pp_print_option Format.pp_print_string) status) >>= fun () ->
+        Log.err (fun m ->
+          m "HTTP error %d: %a"
+            code Format.(pp_print_option pp_print_string) status
+        ) >>= fun () ->
         register config >>= aux
   in
   Lwt.dont_wait (fun () -> register config >>= aux) (function
-  | Lwt_switch.Off -> ()
+  | Lwt_switch.Off -> push None; ()
   | e -> Logi.err (fun m -> m "uncaught: %s" (Printexc.to_string e)));
   stream
 
