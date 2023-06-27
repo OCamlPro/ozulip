@@ -1,4 +1,4 @@
-(lang dune 2.0)
+(lang dune 3.0)
 
 (name ozulip)
 
@@ -9,9 +9,9 @@
 
 (authors "Mohamed Hernouf <mohamed.hernouf@ocamlpro.com>")
 
-(maintainers "Mohamed Hernouf <mohamed.hernouf@ocamlpro.com>")
+(maintainers "Dario Pinto <dario.pinto@ocamlpro.com>")
 
-(license "LGPL-2.1-only with OCaml-LGPL-linking-exception")
+(license "LGPL-2.1-only WITH OCaml-LGPL-linking-exception")
 
 (documentation https://ocamlpro.github.io/ozulip/)
 
@@ -27,7 +27,8 @@
   re
   base64
   lwt
-  (ez_file (>= 0.3.0))
+  (ez_file
+   (>= 0.3.0))
   cohttp-lwt-unix
   yojson
   logs)
