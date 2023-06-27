@@ -57,12 +57,7 @@ let send_message ?queue_id ?local_id config dest content =
   | Error (code, msg) ->
       Lwt.return_error (code, msg)
 
-let upload_file config filename =
-  let file_content =
-    try
-      Some ( EzFile.read_file filename )
-    with _ -> None
-  in
+let construct_and_send_file config filename file_content =
   match file_content with
   | Some file_content -> (
       let boundary = Format.sprintf "%x" (Hashtbl.hash filename) in
@@ -92,6 +87,17 @@ let upload_file config filename =
   | None ->
       Printf.eprintf "Input Error : file %s does not exist\n" filename;
       Lwt.return_none
+
+let upload_string_file config ~filename ~file_content =
+  construct_and_send_file config filename file_content
+
+let upload_file config filename =
+  let file_content =
+    try
+      Some ( EzFile.read_file filename )
+    with _ -> None
+  in
+  construct_and_send_file config filename file_content
 
 let encode_body_edit_message topic stream_id content prop_mode notif_old
     notif_new =

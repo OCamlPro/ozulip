@@ -39,7 +39,11 @@ val send_message :
 
 val upload_file : Config.config -> string -> string option Lwt.t
 (** [upload_file config path] uploads a single file under the path [path].
-    Retruns corresponding URI of the file on the server. *)
+    Returns corresponding URI of the file on the server. *)
+
+val upload_string_file : Config.config -> filename:string -> file_content:string option -> string option Lwt.t
+(** [upload_string_file config filename file_content] is the same as [upload_file] but uses string [file_content] instead of a path to a file.
+    Returns corresponding URI of the file on the server. *)
 
 val edit_message :
   ?topic:string ->
