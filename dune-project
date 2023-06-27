@@ -4,6 +4,8 @@
 
 (generate_opam_files true)
 
+(implicit_transitive_deps false)
+
 (source
  (github OCamlPro/ozulip))
 
@@ -22,14 +24,19 @@
   (ocaml
    (>= 4.10))
   (dune
-   (>= 2.0))
-  ez_api
+   (>= 2.7))
+  (ez_api
+   (>= 2.0.0))
   re
   base64
-  lwt
   (ez_file
    (>= 0.3.0))
   cohttp-lwt-unix
+  (json-data-encoding
+   (>= 1.0.0))
+  logs
+  (lwt
+   (>= 5.4.0))
   yojson
   logs)
  (tags
